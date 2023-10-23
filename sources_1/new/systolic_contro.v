@@ -6,22 +6,18 @@ module systolic_control(
     input rst,
     input tpu_start,																//total enable signal
 	
-	output reg sram_write_enable,
+	//fifo
+	input rempty,
+	input wfull,
 
-	//addr_sel
-	output reg [6:0] addr_serial_num,
+	input read_done,
+	input compute_done,
+	input write_done,
 
-	//systolic array
-	output reg alu_start,																//shift & multiplcation start
-	output reg [8:0] cycle_num,													//for systolic.v
-	output reg [5:0] matrix_index,													//index for write-out SRAM data
-	output reg [1:0] data_set,
-	
-    output reg [2 * datawith -1 :0] fifo_start_alu,
-
-
+	output reg read_start,
+	output reg compuate_start,
+	output reg write_start,
 	output reg tpu_done	
-
 );
 // status machine 
 localparam  states_wait = 3'b000;   // wait for the start signal
@@ -32,14 +28,14 @@ localparam states_write = 3'b011;	// write out the data
 reg [2:0] states;
 reg [2:0] next_states;
 
-reg [array_size -1:0] data_start;
-reg [array_size -1:0] weight_start;
+// reg [array_size -1:0] data_start;
+// reg [array_size -1:0] weight_start;
 
-assign fifo_start_alu = {data_start,weight_start};
+// assign fifo_start_alu = {data_start,weight_start};
 
-reg read_start,read_done;
-reg compute_start,compute_done;
-reg write_start,write_done;
+// reg read_start,read_done;
+// reg compute_start,compute_done;
+// reg write_start,write_done;
 
 
 
@@ -57,24 +53,116 @@ end
 always @(posedge clk,negedge rst)	begin
 	if(!rst) begin
 		states <= states_wait;
-		negedge
+		next_states <= states_wait;
+	end
+	else
+		begin
+			states <= next_states;
+			case(states)
+				states_wait:begin
+					if(tpu_start) begin
+						next_states <= states_read;
+					end
+					else begin
+						next_states <= states_wait;
+					end
+				end
+				states_read:begin
+					if(read_done) begin
+						next_states <= states_compu;
+					end
+					else begin
+						next_states <= states_read;
+					end
+				end
+				states_compu:begin
+					if(compute_done) begin
+						next_states <= states_write;
+					end
+					else begin
+						next_states <= states_compu;
+					end
+				end
+				states_write:begin
+					if(write_done) begin
+						next_states <= states_wait;
+					end
+					else begin
+						next_states <= states_write;
+					end
+				end
+				default:begin
+					next_states <= states_wait;
+				end
+			endcase
+		end
 end
 
 
-
-always @(*)
-
-
-
-
-always @(posedge clk or posedge rst)begin
-    
+always @(*) begin
+	case(states)
+		states_wait:begin
+			read_start = 1'b0;
+			compute_start = 1'b0;
+			write_start = 1'b0;
+		end
+		states_read:begin
+			read_start = 1'b1;
+			compute_start = 1'b0;
+			write_start = 1'b0;
+		end
+		states_compu:begin
+			read_start = 1'b0;
+			compute_start = 1'b1;
+			write_start = 1'b0;
+		end
+		states_write:begin
+			read_start = 1'b0;
+			compute_start = 1'b0;
+			write_start = 1'b1;
+		end
+		default:begin
+			read_start = 1'b0;
+			compute_start = 1'b0;
+			write_start = 1'b0;
+		end
+	endcase
 end
 
-reg states;
+
+always @(posedge clk,negedge rst) begin
+	if(!rst) begin
+		tpu_done <= 0;
+	end
+	else if(rempty ) begin
+		tpu_done <= 1;
+	end
+end
+
+///read states  
 
 
-addr_serial_num
-
+// always @(posedge clk,negedge rst) begin
+// 	if(!rst) begin
+// 		data_start <= 0;
+// 		weight_start <= 0;
+// 	end
+// 	else begin
+// 		if(read_start) begin
+// 			if(rempty) begin
+// 				data_start <= 0;
+// 				weight_start <= 0;
+// 			end
+// 			else begin
+// 				data_start <= data_start + 1;
+// 				weight_start <= weight_start + 1;
+// 			end
+// 		end
+// 		else begin
+// 			data_start <= 0;
+// 			weight_start <= 0;
+// 		end
+// 	end
+// end	
 
 endmodule

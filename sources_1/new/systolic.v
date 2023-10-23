@@ -26,14 +26,23 @@ module systolic#(
 (
     input clk,
     input rst,
-    input [datawith-1:0] weight_1,
-    input [datawith-1:0] weight_2,
-    input [datawith-1:0] data_1,
-    input [datawith-1:0] data_2,
+    input [4*datawith-1:0] weight_in,
+    input [4*datawith-1:0] data_in,
 
     input systolic_en,
     output [4*datawith-1:0] data_out
 );
+
+
+wire [datawith-1:0] weight_1,
+wire [datawith-1:0] weight_2,
+wire [datawith-1:0] data_1,
+wire [datawith-1:0] data_2,
+// we need check the bit location 
+assign weight_1 = weight_in[0:datawith-1],
+assign weight_2 = weight_in[datawith*array_size-1:datawith*array_size],
+assign data_1 = data_in[0:datawith-1],
+assign data_2 = data_in[datawith*array_size-1:datawith*array_size],
 
 
 reg [array_size*array_size-1:0]pe_count;
