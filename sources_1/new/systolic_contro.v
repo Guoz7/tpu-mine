@@ -1,6 +1,6 @@
-module systolic_control(
+module systolic_control#(
     parameter datawith = 16,
-    parameter array_size = 8
+    parameter array_size = 2
 )(
     input clk,
     input rst,
@@ -15,7 +15,7 @@ module systolic_control(
 	input write_done,
 
 	output reg read_start,
-	output reg compuate_start,
+	output reg compute_start,
 	output reg write_start,
 	output reg tpu_done	
 );
@@ -42,11 +42,11 @@ reg [2:0] next_states;
 always @(posedge clk or posedge rst)begin
 	if(rst) begin
 		states <= states_wait;
-		new_states <= states_wait;	
+		next_states <= states_wait;	
 	end
 	else begin
 		states <= states;
-		new_states <= next_states;
+		next_states <= next_states;
 	end
 end
 
@@ -134,7 +134,7 @@ always @(posedge clk,negedge rst) begin
 	if(!rst) begin
 		tpu_done <= 0;
 	end
-	else if(rempty ) begin
+	else if(write_done  ) begin
 		tpu_done <= 1;
 	end
 end

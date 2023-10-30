@@ -103,3 +103,49 @@ always @(posedge clk or negedge rst_n) begin
 end
 
 endmodule
+
+
+
+
+module sram1#(
+    parameter WIDTH = 16,
+    parameter DEPTH = 1024
+)
+
+(
+    input clk,
+    input rst_n,
+    input [9:0] addr,
+    input [WIDTH-1:0] w_data,
+    input wr,
+    output reg [WIDTH-1:0] read_data
+
+);
+
+
+localparam addr = $clog2(DEPTH);
+reg [WIDTH-1:0] sram [0:addr-1];
+
+always @(posedge clk,negedge rst_n) begin
+    if(!rst_n) begin
+        sram[0] <= 0;
+    end
+    else begin
+        if(wr == 1) begin
+            sram[addr] <= w_data;
+        end
+    end
+end
+
+always @(posedge clk,negedge rst_n) begin
+    if(!rst_n) begin
+        read_data <= 0;
+    end
+    else begin
+        if(wr == 0) begin
+            read_data <= sram[addr];
+        end
+    end
+end
+
+endmodule
