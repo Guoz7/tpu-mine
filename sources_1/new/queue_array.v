@@ -6,14 +6,17 @@ module queue_array#(
 (
     input clk,
     input rst_n,
-    input [9:0]data_addr,
+    // input [9:0]data_addr,
     input [3:0] data_size,
+    input [datawith-1:0] data_2_fifo,
     // cotrol 
     input read_start,
     output reg read_done,
 
     input compute_start,
-
+    
+    
+    output reg [9:0] fifo_write_addr,
     output [array_size*datawith-1:0] data_2_sys,
     output [array_size*datawith-1:0] weight_2_sys,
     output reg rempty,
@@ -30,7 +33,7 @@ reg  [9:0] sram_weigth_addr;
 wire [2*4-1:0] fifo_write_en;
 wire [2*4-1:0] fifo_read_en;
 
-reg [datawith-1:0] data_2_fifo[3:0];
+// reg [datawith-1:0] data_2_fifo[3:0];
 
 
 wire [datawith-1:0] weight_2_sys_tmp[3:0];
@@ -40,6 +43,7 @@ assign weight_2_sys = {weight_2_sys_tmp[3],weight_2_sys_tmp[2],weight_2_sys_tmp[
 wire wfull_tmp [array_size*2-1:0];
 wire rempty_tmp [array_size*2-1:0];
 
+reg w_en;
 
 genvar  v_idx;
 generate 
@@ -49,7 +53,7 @@ generate
             .rst_n(rst_n),
             .winc(fifo_write_en[v_idx]),
             .rinc(fifo_read_en[v_idx]),
-            .wdata(data_2_fifo[v_idx]),
+            .wdata(data_2_fifo),
             .wfull(wfull_tmp[v_idx]),
             .rempty(rempty_tmp[v_idx]),
             .rdata(data_2_sys_tmp[v_idx])
@@ -62,7 +66,7 @@ generate
             .rst_n(rst_n),
             .winc(fifo_write_en[array_size+v_idx]),
             .rinc(fifo_read_en[v_idx]),
-            .wdata(data_2_fifo[v_idx]),
+            .wdata(data_2_fifo),
             .wfull(wfull_tmp[array_size+v_idx]),
             .rempty(rempty_tmp[array_size+v_idx]),
             .rdata(weight_2_sys_tmp[v_idx])
@@ -96,26 +100,15 @@ wire [9:0] sram_weigth_nx;
 assign sram_data_nx = sram_data_addr;
 assign sram_weigth_nx = sram_weigth_addr ;
 wire [datawith-1:0] sram_data_2_fifo;
-sram1 #(.WIDTH(datawith) )sram_data (
-    .clk(clk),
-    .rst_n(rst_n),
-    .addr(sram_data_nx),
-    .w_data(),
-    .wr(1'b0),   //  wr must be 0  ,but we nedd change the value to load data form tb to sram
-    .read_data(sram_data_2_fifo)
-);
-
-// sram #(WIDTH, DEPTH) sram_weigth (
+// sram1 #(.WIDTH(datawith) )sram_data (
 //     .clk(clk),
 //     .rst_n(rst_n),
-//     .addr(sram_raddr_nx),
-//     .data(sram_weigth),
-//     .read_data(weight_2_fifo),
-//     .data_size(data_size)
+//     .addr(sram_data_nx),
+//     .w_data(),
+//     .wr(1'b0),   //  wr must be 0  ,but we nedd change the value to load data form tb to sram
+//     .read_data(sram_data_2_fifo)
 // );
 
-//load data to fifo 
-reg w_en; //control the sram en flag
 
 always @(posedge clk,negedge rst_n) begin
     if (!rst_n) begin
@@ -142,31 +135,31 @@ end
 //     end
 //     end
 // end
-reg [9:0] count_data ;
+// reg [9:0] count_data ;
 
 
 always @(posedge clk,negedge rst_n) begin
     if(!rst_n) begin
-        count_data <= 0;
+        fifo_write_addr <= 0;
     end
     else begin
         if(w_en && wfull !=1 ) begin
-            count_data <= count_data + 1;
+            fifo_write_addr <= fifo_write_addr + 1;
     end
     end
 end
 
 //generate sel flag
-wire[9:0] sram_data_nx_temp;
-assign sram_data_nx_temp = sram_data_nx - data_addr;
-assign fifo_write_en[0] = (count_data < fifo_depth && count_data !=0);
-assign fifo_write_en[1] = ( count_data< 2*fifo_depth && count_data >= fifo_depth);
-assign fifo_write_en[2] = ( count_data< 3*fifo_depth && count_data >= 2*fifo_depth);
-assign fifo_write_en[3] = ( count_data< 4*fifo_depth && count_data >= 3*fifo_depth);
-assign fifo_write_en[4] = ( count_data< 5*fifo_depth && count_data >= 4*fifo_depth);
-assign fifo_write_en[5] = ( count_data< 6*fifo_depth && count_data >= 5*fifo_depth);
-assign fifo_write_en[6] = ( count_data< 7*fifo_depth && count_data >= 6*fifo_depth);
-assign fifo_write_en[7] = ( count_data< 8*fifo_depth && count_data >= 7*fifo_depth);
+// wire[9:0] sram_data_nx_temp;
+// assign sram_data_nx_temp = sram_data_nx - data_addr;
+assign fifo_write_en[0] = (fifo_write_addr < fifo_depth && fifo_write_addr !=0);
+assign fifo_write_en[1] = ( fifo_write_addr< 2*fifo_depth && fifo_write_addr >= fifo_depth);
+assign fifo_write_en[2] = ( fifo_write_addr< 3*fifo_depth && fifo_write_addr >= 2*fifo_depth);
+assign fifo_write_en[3] = ( fifo_write_addr< 4*fifo_depth && fifo_write_addr >= 3*fifo_depth);
+assign fifo_write_en[4] = ( fifo_write_addr< 5*fifo_depth && fifo_write_addr >= 4*fifo_depth);
+assign fifo_write_en[5] = ( fifo_write_addr< 6*fifo_depth && fifo_write_addr >= 5*fifo_depth);
+assign fifo_write_en[6] = ( fifo_write_addr< 7*fifo_depth && fifo_write_addr >= 6*fifo_depth);
+assign fifo_write_en[7] = ( fifo_write_addr< 8*fifo_depth && fifo_write_addr >= 7*fifo_depth);
 
 
 always @(posedge clk,negedge rst_n) begin
@@ -175,7 +168,7 @@ always @(posedge clk,negedge rst_n) begin
     end
     else
     begin
-        if(count_data == 8*fifo_depth) begin
+        if(fifo_write_addr == 8*fifo_depth) begin
             read_done <= 1;
     end
     end

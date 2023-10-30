@@ -42,7 +42,7 @@ module sfifo#(
 	output wire [WIDTH-1:0]	rdata
 );
 
-parameter addr = $clog2(DEPTH);
+localparam addr = $clog2(DEPTH);
 // generate addr
 reg [$clog2(DEPTH):0] wr_ptr;
 reg [$clog2(DEPTH):0] rd_ptr;
@@ -107,45 +107,45 @@ endmodule
 
 
 
-module sram1#(
-    parameter WIDTH = 16,
-    parameter DEPTH = 1024
-)
+// module sram1#(
+//     parameter WIDTH = 16,
+//     parameter DEPTH = 1024
+// )
 
-(
-    input clk,
-    input rst_n,
-    input [9:0] addr,
-    input [WIDTH-1:0] w_data,
-    input wr,
-    output reg [WIDTH-1:0] read_data
+// (
+//     input clk,
+//     input rst_n,
+//     input [9:0] addr,
+//     input [WIDTH-1:0] w_data,
+//     input wr,
+//     output reg [WIDTH-1:0] read_data
 
-);
+// );
 
 
-localparam addr = $clog2(DEPTH);
-reg [WIDTH-1:0] sram [0:addr-1];
+// localparam len = $clog2(DEPTH);
+// reg [WIDTH-1:0] sram [0:len-1];
 
-always @(posedge clk,negedge rst_n) begin
-    if(!rst_n) begin
-        sram[0] <= 0;
-    end
-    else begin
-        if(wr == 1) begin
-            sram[addr] <= w_data;
-        end
-    end
-end
+// always @(posedge clk,negedge rst_n) begin
+//     if(!rst_n) begin
+//         sram[0] <= 0;
+//     end
+//     else begin
+//         if(wr == 1) begin
+//             sram[addr] <= w_data;
+//         end
+//     end
+// end
 
-always @(posedge clk,negedge rst_n) begin
-    if(!rst_n) begin
-        read_data <= 0;
-    end
-    else begin
-        if(wr == 0) begin
-            read_data <= sram[addr];
-        end
-    end
-end
+// always @(posedge clk,negedge rst_n) begin
+//     if(!rst_n) begin
+//         read_data <= 0;
+//     end
+//     else begin
+//         if(wr == 0) begin
+//             read_data <= sram[addr];
+//         end
+//     end
+// end
 
-endmodule
+// endmodule

@@ -30,7 +30,7 @@ module systolic#(
     input [array_size*datawith-1:0] data_in,
 
     input systolic_en,
-    output [array_size*datawith-1:0] data_out
+    output [array_size*array_size*datawith-1:0] data_out
 );
 
 
@@ -135,7 +135,6 @@ pe #(.datawith(datawith)) pe_11(
     .result(data_out11),
     .pe_en(pe_en[2])
 );
-
 
 
 endmodule
