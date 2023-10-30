@@ -1,10 +1,10 @@
 `timescale 1ns/1ns
 
-module sram_testbench;
+module tpu_top;
     reg clk;
     reg reset;
-    wire [1:0] address;
-    wire [15:0] data_in;
+    // wire [1:0] address;
+    // wire [15:0] data_in;
     wire [15:0] data_out;
 
     // Instantiate your SRAM module
@@ -19,6 +19,14 @@ module sram_testbench;
     reg [15:0] mem [0:15]; // Memory to hold data read from the text file
     integer file;
     reg [15:0] file_data;
+    integer i;
+    reg tpu_start;
+    reg [9:0] address;
+    reg [15:0] data_in;
+    reg write_en;
+
+
+
 
     initial begin
         // Initialize clock and reset
@@ -28,13 +36,17 @@ module sram_testbench;
         // Apply reset
         #10 reset = 0;
 
+
+
+
+        #100 tpu_start = 1;
         // Open the text file for reading
         file = $fopen("data.txt", "r");
         if (file == 0)
             $display("Error opening the file");
 
         // Read data from the text file and write it to SRAM
-        for (int i = 0; i < 16; i = i + 1) begin
+        for ( i = 0; i < 16; i = i + 1) begin
             // Read data from the file
             if (!$feof(file)) begin
                 $fscanf(file, "%h %h %h %h", 
@@ -50,7 +62,7 @@ module sram_testbench;
                 address = i;
                 data_in = file_data;
                 #5 write_en = 1;
-                #5 weite_en = 0; // Add a delay to simulate SRAM write operation
+                #5 write_en = 0; // Add a delay to simulate SRAM write operation
                 
             end
         end
@@ -62,7 +74,7 @@ module sram_testbench;
         if (file == 0)
             $display("Error opening the file");
 
-        for (int i = 0; i < 16; i = i + 1) begin
+        for ( i = 0; i < 16; i = i + 1) begin
             // Read weights from the file
             if (!$feof(file)) begin
                 $fscanf(file, "%h %h %h %h", 
@@ -87,7 +99,7 @@ module sram_testbench;
 
 
 
-        #100 tpu_start = 1;
+
         // Finish the simulation
         $finish;
     end
@@ -95,5 +107,22 @@ module sram_testbench;
     always begin
         #5 clk = ~clk; // Toggle the clock every 5 time units
     end
+
+tpuv1 #(.datawith(16),.array_size(2)) tpuv1_0(
+    .clk(clk),
+    .rst_n(reset),
+    .tpu_start(tpu_start),
+    .write_addr(),
+    .data_size(),
+    .data_in(data_in),
+    .write_en(write_en),
+    .data_out(data_out)
+); 
+
+
+
+
+
+
 
 endmodule
