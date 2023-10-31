@@ -43,6 +43,7 @@ wire [9:0] read_from_sram_addr;
 wire [9:0]write_back_addr;
 
 wire [datawith-1:0]sram_data_2_fifo;
+wire read_all_data;
 
 queue_array #(.datawith(datawith),.array_size(array_size)) queue_array_0(
     .clk(clk),
@@ -57,7 +58,8 @@ queue_array #(.datawith(datawith),.array_size(array_size)) queue_array_0(
     .weight_2_sys(weight_2_sys),
     .rempty(rempty),
     .wfull(wfull),
-    .fifo_write_addr(read_from_sram_addr)
+    .fifo_write_addr(read_from_sram_addr),
+    .read_all_data(read_all_data)
 );
 
 
@@ -81,10 +83,12 @@ systolic_control #(.datawith(datawith),.array_size(array_size)) systolic_control
 systolic #(.datawith(datawith),.array_size(array_size)) systolic_0(
     .clk(clk),
     .rst(rst_n),
+    .read_all_data(read_all_data),
     .weight_in(weight_2_sys),
     .data_in(data_2_sys),
     .systolic_en(compute_start),
-    .data_out(data_out_array)
+    .data_out(data_out_array),
+    .compute_done(compute_done) 
 );
 
 
@@ -99,7 +103,7 @@ write_back #(.datawith(datawith)) write_back_0(
     .addr_out(write_back_addr)//write bach to sram
 );
 
-assign data_addr1 = read_start?write_addr:read_from_sram_addr;
+assign data_addr1 = read_start?read_from_sram_addr:write_addr;
 assign data_addr = write_start?write_back_addr:data_addr1;
 sram1 #(.WIDTH(datawith) )sram_data (
     .clk(clk),

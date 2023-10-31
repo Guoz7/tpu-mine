@@ -36,10 +36,12 @@ module tpu_top;
         // Apply reset
         #10 reset = 0;
 
+        #50 reset = 1;
 
 
 
-        #100 tpu_start = 1;
+
+
         // Open the text file for reading
         file = $fopen("D:/vspro/TPU_mine/data/data.txt", "r");
         if (file == 0)
@@ -51,25 +53,21 @@ module tpu_top;
             if (!$feof(file)) begin
                 $fscanf(file, "%h %h %h %h", 
                         file_data[3], file_data[2], file_data[1], file_data[0]);
-                // $fscanf(file, "%h %h %h %h", 
-                //         file_data[11], file_data[10], file_data[9], file_data[8]);
-                // $fscanf(file, "%h %h %h %h", 
-                //         file_data[7], file_data[6], file_data[5], file_data[4]);
-                // $fscanf(file, "%h %h %h %h", 
-                //         file_data[3], file_data[2], file_data[1], file_data[0]);
-
                 // Write data to SRAM
-                address = i;
-                data_in = file_data[3];
+                address = i*4;
+                data_in = file_data[0];
                 #5 write_en = 1;
                 #5 write_en = 0; // Add a delay to simulate SRAM write operation
-                data_in = file_data[2];
-                #5 write_en = 1;
-                #5 write_en = 0; // Add a delay to simulate SRAM write operation
+                address = i*4+1;
                 data_in = file_data[1];
                 #5 write_en = 1;
                 #5 write_en = 0; // Add a delay to simulate SRAM write operation
-                data_in = file_data[0];
+                data_in = file_data[2];
+                address = i*4+2;
+                #5 write_en = 1;
+                #5 write_en = 0; // Add a delay to simulate SRAM write operation
+                data_in = file_data[3];
+                address = i*4+3;
                 #5 write_en = 1;
                 #5 write_en = 0; // Add a delay to simulate SRAM write operation
                 
@@ -88,27 +86,24 @@ module tpu_top;
             if (!$feof(file)) begin
                 $fscanf(file, "%h %h %h %h", 
                         file_data[3], file_data[2], file_data[1], file_data[0]);
-                // $fscanf(file, "%h %h %h %h",
-                //         file_data[11], file_data[10], file_data[9], file_data[8]);
-                // $fscanf(file, "%h %h %h %h",
-                //         file_data[7], file_data[6], file_data[5], file_data[4]);
-                // $fscanf(file, "%h %h %h %h",
-                //         file_data[3], file_data[2], file_data[1], file_data[0]);
-
-                // Write data to SRAM
-                address = i;
-                data_in = file_data[3];
-                #5 write_en = 1;
-                #5 write_en = 0; // Add a delay to simulate SRAM write operation
-                data_in = file_data[2];
-                #5 write_en = 1;
-                #5 write_en = 0; // Add a delay to simulate SRAM write operation
-                data_in = file_data[1];
-                #5 write_en = 1;
-                #5 write_en = 0; // Add a delay to simulate SRAM write operation
+                // Write weights to SRAM
+                address = i*4+16;
                 data_in = file_data[0];
                 #5 write_en = 1;
                 #5 write_en = 0; // Add a delay to simulate SRAM write operation
+                address = i*4+17;
+                data_in = file_data[1];
+                #5 write_en = 1;
+                #5 write_en = 0; // Add a delay to simulate SRAM write operation
+                data_in = file_data[2];
+                address = i*4+18;
+                #5 write_en = 1;
+                #5 write_en = 0; // Add a delay to simulate SRAM write operation
+                data_in = file_data[3];
+                address = i*4+19;
+                #5 write_en = 1;
+                #5 write_en = 0; // Add a delay to simulate SRAM write operation
+
             end
 
         // Perform read operations from SRAM and verify the data
@@ -117,6 +112,8 @@ module tpu_top;
 
         // Finish the simulation
 //        $finish;
+
+    #100 tpu_start = 1;
     #1000 tpu_start = 0;
     end
 

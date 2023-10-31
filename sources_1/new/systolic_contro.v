@@ -38,64 +38,59 @@ reg [2:0] next_states;
 // reg write_start,write_done;
 
 
-
-always @(posedge clk or posedge rst)begin
-	if(rst) begin
-		states <= states_wait;
-		next_states <= states_wait;	
-	end
-	else begin
-		states <= states;
-		next_states <= next_states;
-	end
-end
-
-always @(posedge clk,negedge rst)	begin
-	if(!rst) begin
+always@(posedge clk,negedge rst) begin
+		if(!rst) begin
 		states <= states_wait;
 		next_states <= states_wait;
 	end
-	else
-		begin
-			states <= next_states;
-			case(states)
-				states_wait:begin
-					if(tpu_start) begin
-						next_states <= states_read;
-					end
-					else begin
-						next_states <= states_wait;
-					end
+	else 
+	begin
+	states <= next_states;
+	end
+	end
+
+
+always @(*)	begin
+	begin
+		// states <= next_states;
+		case(states)
+			states_wait:begin
+				if(tpu_start) begin
+					next_states <= states_read;
 				end
-				states_read:begin
-					if(read_done) begin
-						next_states <= states_compu;
-					end
-					else begin
-						next_states <= states_read;
-					end
-				end
-				states_compu:begin
-					if(compute_done) begin
-						next_states <= states_write;
-					end
-					else begin
-						next_states <= states_compu;
-					end
-				end
-				states_write:begin
-					if(write_done) begin
-						next_states <= states_wait;
-					end
-					else begin
-						next_states <= states_write;
-					end
-				end
-				default:begin
+				else begin
 					next_states <= states_wait;
 				end
-			endcase
-		end
+			end
+			states_read:begin
+				if(read_done) begin
+					next_states <= states_compu;
+				end
+				else begin
+					next_states <= states_read;
+				end
+			end
+			states_compu:begin
+				if(compute_done) begin
+					next_states <= states_write;
+				end
+				else begin
+					next_states <= states_compu;
+				end
+			end
+			states_write:begin
+				if(write_done) begin
+					next_states <= states_wait;
+				end
+				else begin
+					next_states <= states_write;
+				end
+			end
+			default:begin
+				next_states <= states_wait;
+			end
+		endcase
+	end
 end
 
 

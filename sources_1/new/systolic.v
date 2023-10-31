@@ -28,9 +28,11 @@ module systolic#(
     input rst,
     input [array_size*datawith-1:0] weight_in,
     input [array_size*datawith-1:0] data_in,
+    input read_all_data,
 
     input systolic_en,
-    output [array_size*array_size*datawith-1:0] data_out
+    output [array_size*array_size*datawith-1:0] data_out,
+    output reg compute_done
 );
 
 
@@ -62,6 +64,9 @@ assign data_fifo_1 = data_2;
 assign weight_fifo_0 = weight_1;
 assign weight_fifo_1 = weight_2;
 
+reg [$clog2(array_size*2)-1:0]pe_done_count;
+
+
 wire [datawith-1:0] data_out00,data_out01,data_out10,data_out11;
 
 assign data_out = {data_out00,data_out01,data_out10,data_out11};
@@ -70,24 +75,50 @@ always @(posedge clk,negedge rst,negedge systolic_en)begin
     if(!rst || !systolic_en) begin
         pe_count <= 0;
     end
-    else 
-    begin
-        if(systolic_en && pe_count < 16) 
+    else if(systolic_en && pe_count < array_size*2) begin
             pe_count <= pe_count + 1;
     end
 end
 
 integer i;
 
+always @(posedge clk,negedge rst) begin
+    if(!rst) begin
+        pe_done_count <= 0;
+    end
+    else if(read_all_data && pe_done_count < array_size*2-1) begin
+        pe_done_count <= pe_done_count + 1;
+    end
+end
+
+
 wire [16 -1:0] pe_en;
 
+ 
+assign pe_en[0] = (pe_done_count >0 && read_all_data)?0: (pe_count > 0 && systolic_en ) ;   //systolic_en is computer start
+assign pe_en[1] = (pe_done_count >1) ? 0 : (pe_count > 1  ) ;
+assign pe_en[2] = (pe_done_count >2) ? 0 : (pe_count > 2   ) ;
+assign pe_en[3] = (pe_done_count >3) ? 0 : (pe_count > 3   ) ;
 
-assign pe_en[0] = (pe_count > 0) ;
-assign pe_en[1] = (pe_count > 1) ;
-assign pe_en[2] = (pe_count > 2) ;
-assign pe_en[3] = (pe_count > 3) ;
+
+always @ (posedge clk,negedge rst) begin
+if(!rst)begin
+    compute_done <= 0;
+end
+else
+begin
+    if(pe_done_count == array_size*2-1) begin
+        compute_done <= 1;
+    end
+    else begin
+        compute_done <= compute_done;
+    end
+
+end
 
 
+
+end
 
 // assign pe_en = (pe_count == 3);
 // assign pe11_en = (pe_count == 4);
@@ -161,7 +192,6 @@ module pe
 
 );
 wire [datawith-1:0] mul_result_out;
-reg [datawith-1:0] add_result_out;
 
 assign  mul_result_out = data_in * weight_in;
 
