@@ -52,7 +52,7 @@ module tpu_top;
             // Read data from the file
             if (!$feof(file)) begin
                 $fscanf(file, "%h %h %h %h", 
-                        file_data[3], file_data[2], file_data[1], file_data[0]);
+                        file_data[0], file_data[1], file_data[2], file_data[3]);
                 // Write data to SRAM
                 address = i*4;
                 data_in = file_data[0];

@@ -69,7 +69,7 @@ reg [$clog2(array_size*2)-1:0]pe_done_count;
 
 wire [datawith-1:0] data_out00,data_out01,data_out10,data_out11;
 
-assign data_out = {data_out00,data_out01,data_out10,data_out11};
+assign data_out = {data_out11,data_out10,data_out01,data_out00};
 
 always @(posedge clk,negedge rst,negedge systolic_en)begin
     if(!rst || !systolic_en) begin
