@@ -24,26 +24,16 @@ module tpu_top;
     reg [9:0] address;
     reg [15:0] data_in;
     reg write_en;
-
-
-
-
+    parameter  period1 = 20;
     initial begin
         // Initialize clock and reset
         clk = 0;
         reset = 1;
-
         // Apply reset
         #10 reset = 0;
-
         #50 reset = 1;
-
-
-
-
-
         // Open the text file for reading
-        file = $fopen("D:/vspro/TPU_mine/data/data.txt", "r");
+        file = $fopen("D:/project_verilog/tpu-mine/data.txt", "r");
         if (file == 0)
             $display("Error opening the file");
 
@@ -56,20 +46,20 @@ module tpu_top;
                 // Write data to SRAM
                 address = i*4;
                 data_in = file_data[0];
-                #5 write_en = 1;
-                #5 write_en = 0; // Add a delay to simulate SRAM write operation
+                #(period1/2) write_en = 1;
+                #(period1/2) write_en = 0; // Add a delay to simulate SRAM write operation
                 address = i*4+1;
                 data_in = file_data[1];
-                #5 write_en = 1;
-                #5 write_en = 0; // Add a delay to simulate SRAM write operation
+                #(period1/2) write_en = 1;
+                #(period1/2) write_en = 0; // Add a delay to simulate SRAM write operation
                 data_in = file_data[2];
                 address = i*4+2;
-                #5 write_en = 1;
-                #5 write_en = 0; // Add a delay to simulate SRAM write operation
+                #(period1/2) write_en = 1;
+                #(period1/2) write_en = 0; // Add a delay to simulate SRAM write operation
                 data_in = file_data[3];
                 address = i*4+3;
-                #5 write_en = 1;
-                #5 write_en = 0; // Add a delay to simulate SRAM write operation
+                #(period1/2) write_en = 1;
+                #(period1/2) write_en = 0; // Add a delay to simulate SRAM write operation
                 
             end
         end
@@ -77,7 +67,7 @@ module tpu_top;
         // Close the file
         $fclose(file);
 
-        file = $fopen("D:/vspro/TPU_mine/data/weight.txt", "r");
+        file = $fopen("D:/project_verilog/tpu-mine/weight.txt", "r");
         if (file == 0)
             $display("Error opening the file");
 
@@ -89,20 +79,20 @@ module tpu_top;
                 // Write weights to SRAM
                 address = i*4+16;
                 data_in = file_data[0];
-                #5 write_en = 1;
-                #5 write_en = 0; // Add a delay to simulate SRAM write operation
+                #(period1/2) write_en = 1;
+                #(period1/2) write_en = 0; // Add a delay to simulate SRAM write operation
                 address = i*4+17;
                 data_in = file_data[1];
-                #5 write_en = 1;
-                #5 write_en = 0; // Add a delay to simulate SRAM write operation
+                #(period1/2) write_en = 1;
+                #(period1/2) write_en = 0; // Add a delay to simulate SRAM write operation
                 data_in = file_data[2];
                 address = i*4+18;
-                #5 write_en = 1;
-                #5 write_en = 0; // Add a delay to simulate SRAM write operation
+                #(period1/2) write_en = 1;
+                #(period1/2) write_en = 0; // Add a delay to simulate SRAM write operation
                 data_in = file_data[3];
                 address = i*4+19;
-                #5 write_en = 1;
-                #5 write_en = 0; // Add a delay to simulate SRAM write operation
+                #(period1/2) write_en = 1;
+                #(period1/2) write_en = 0; // Add a delay to simulate SRAM write operation
 
             end
 
@@ -118,7 +108,7 @@ module tpu_top;
     end
 
     always begin
-        #5 clk = ~clk; // Toggle the clock every 5 time units
+        #(period1/2) clk = ~clk; // Toggle the clock every 5 time units
     end
 
 tpuv1 #(.datawith(16),.array_size(2)) tpuv1_0(

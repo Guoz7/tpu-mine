@@ -41,7 +41,7 @@ reg [2:0] next_states;
 always@(posedge clk,negedge rst) begin
 		if(!rst) begin
 		states <= states_wait;
-		next_states <= states_wait;
+		//next_states <= states_wait;
 	end
 	else 
 	begin

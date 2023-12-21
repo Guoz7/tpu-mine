@@ -167,8 +167,8 @@ end
 
 assign fifo_read_en[0] = ( compute_start && read_count >= 0 && rempty_tmp_data[0] == 0 && rempty_tmp_weight[0] == 0 ) ;    
 assign fifo_read_en[1] = ( read_count >= 1 && rempty_tmp_data[1] == 0 && rempty_tmp_weight[1] == 0);
-assign fifo_read_en[2] = ( read_count >= 2 && rempty_tmp_data[2] == 0 && rempty_tmp_weight[2] == 0) ;
-assign fifo_read_en[3] = ( read_count >= 3 & rempty_tmp_data[3] == 0 && rempty_tmp_weight[3] == 0) ;
+//assign fifo_read_en[2] = ( read_count >= 2 && rempty_tmp_data[2] == 0 && rempty_tmp_weight[2] == 0) ;
+//assign fifo_read_en[3] = ( read_count >= 3 & rempty_tmp_data[3] == 0 && rempty_tmp_weight[3] == 0) ;
 
 
 //////generate compute_done
@@ -212,7 +212,7 @@ reg [WIDTH-1:0] sram [0:DEPTH-1];
 
 always @(posedge clk,negedge rst_n) begin
     if(!rst_n) begin
-        sram[0] <= 0;
+        //sram[0] <= 0;
     end
     else begin
         if(wr == 1) begin
