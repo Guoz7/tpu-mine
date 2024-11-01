@@ -21,7 +21,7 @@
 
 module systolic#(
     parameter datawith = 16,
-    parameter array_size = 2                                                                                                                                                                                                                                                                                                                                                                                                 
+    parameter array_size =2                          
 )
 (
     input clk,
