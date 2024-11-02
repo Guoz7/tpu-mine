@@ -94,14 +94,14 @@ end
 
 
 /////generate the pe enable signal
-wire [array_size * array_size - 1:0] pe_en;
+wire  pe_en [0 : array_size * array_size - 1][0:array_size * array_size - 1];
 
 for (i = 0; i < array_size ; i++) begin
     for (j = 0; j < array_size ; j++) begin
         assign pe_en[i*array_size+j] = (pe_done_count > i*array_size+j) ? 0 : (pe_count > i*array_size+j);
     end
 end
-assign pe_en[0] = (pe_done_count >0 && read_all_data)?0: (pe_count > 0 && systolic_en ) ;   //systolic_en is computer start
+assign pe_en[0][0] = (pe_done_count >0 && read_all_data)?0: (pe_count > 0 && systolic_en ) ;   //systolic_en is computer start
 // assign pe_en[1] = (pe_done_count >1) ? 0 : (pe_count > 1  ) ;
 // assign pe_en[2] = (pe_done_count >2) ? 0 : (pe_count > 2   ) ;
 // assign pe_en[3] = (pe_done_count >3) ? 0 : (pe_count > 3   ) ;
@@ -204,52 +204,52 @@ endgenerate
 
 
 
-// assign pe_en = (pe_count == 3);
-// assign pe11_en = (pe_count == 4);
+// // assign pe_en = (pe_count == 3);
+// // assign pe11_en = (pe_count == 4);
 
-pe #(.datawidth(datawidth)) pe_00(
-    .clk(clk),
-    .rst(rst),
-    .data_in(data_fifo_0),
-    .weight_in(weight_fifo_0),
-    .data_out(data_shitf[0][0]),
-    .weight_out(weight_shitf[0][0]),
-    .result(data_out00),
-    .pe_en(pe_en[0])
-);
+// pe #(.datawidth(datawidth)) pe_00(
+//     .clk(clk),
+//     .rst(rst),
+//     .data_in(data_fifo_0),
+//     .weight_in(weight_fifo_0),
+//     .data_out(data_shitf[0][0]),
+//     .weight_out(weight_shitf[0][0]),
+//     .result(data_out00),
+//     .pe_en(pe_en[0])
+// );
 
-pe #(.datawidth(datawidth)) pe_01(
-    .clk(clk),
-    .rst(rst),
-    .data_in(data_shitf[0][0]),
-    .weight_in(weight_fifo_1),
-    .data_out(data_shitf[0][1]),
-    .weight_out(weight_shitf[0][1]),
-    .result(data_out01),
-    .pe_en(pe_en[1])
-);
+// pe #(.datawidth(datawidth)) pe_01(
+//     .clk(clk),
+//     .rst(rst),
+//     .data_in(data_shitf[0][0]),
+//     .weight_in(weight_fifo_1),
+//     .data_out(data_shitf[0][1]),
+//     .weight_out(weight_shitf[0][1]),
+//     .result(data_out01),
+//     .pe_en(pe_en[1])
+// );
 
-pe #(.datawidth(datawidth)) pe_10(
-    .clk(clk),
-    .rst(rst),
-    .data_in(data_fifo_1),
-    .weight_in(weight_shitf[0][0]),
-    .data_out(data_shitf[1][0]),
-    .weight_out(weight_shitf[1][0]),
-    .result(data_out10),
-    .pe_en(pe_en[1])
-);
+// pe #(.datawidth(datawidth)) pe_10(
+//     .clk(clk),
+//     .rst(rst),
+//     .data_in(data_fifo_1),
+//     .weight_in(weight_shitf[0][0]),
+//     .data_out(data_shitf[1][0]),
+//     .weight_out(weight_shitf[1][0]),
+//     .result(data_out10),
+//     .pe_en(pe_en[1])
+// );
 
-pe #(.datawidth(datawidth)) pe_11(
-    .clk(clk),
-    .rst(rst),
-    .data_in(data_shitf[1][0]),
-    .weight_in(weight_shitf[0][1]),
-    .data_out(data_shitf[1][1]),
-    .weight_out(weight_shitf[1][1]),
-    .result(data_out11),
-    .pe_en(pe_en[2])
-);
+// pe #(.datawidth(datawidth)) pe_11(
+//     .clk(clk),
+//     .rst(rst),
+//     .data_in(data_shitf[1][0]),
+//     .weight_in(weight_shitf[0][1]),
+//     .data_out(data_shitf[1][1]),
+//     .weight_out(weight_shitf[1][1]),
+//     .result(data_out11),
+//     .pe_en(pe_en[2])
+// );
 
 
 endmodule
@@ -264,20 +264,20 @@ module pe
     input clk,
     input rst,
 
-    input pe_en,
 
+    input pe_en,
     inout [datawidth-1:0] data_in,
     inout [datawidth-1:0] weight_in,
+    // input [datawidth-1:0] bias_in,
+
     output reg [datawidth-1:0] data_out,
     output reg  [datawidth-1:0] weight_out,
     //output [datawidth-1:0] mul_result_out,
     output reg [datawidth-1:0] result
-
-
 );
-wire [datawidth-1:0] mul_result_out;
+wire [2 * datawidth-1:0] mul_result_out;
 
-assign  mul_result_out = data_in * weight_in;
+assign  mul_result_out = data_in * weight_in; ////here we dont consider the sign bit
 
 
 
@@ -296,8 +296,7 @@ end
 
 
 
-
-
+//////data and weight shift
 always @(posedge clk,negedge rst)begin
     if(!rst)begin
     data_out <= 0;
