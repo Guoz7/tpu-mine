@@ -20,43 +20,43 @@
 //////////////////////////////////////////////////////////////////////////////////
 
 module systolic#(
-    parameter datawith = 16,
+    parameter datawidth = 16,
     parameter array_size =2                          
 )
 (
     input clk,
     input rst,
-    input [array_size*datawith-1:0] weight_in,
-    input [array_size*datawith-1:0] data_in,
+    input [array_size*datawidth-1:0] weight_in,
+    input [array_size*datawidth-1:0] data_in,
     input read_all_data,
 
     input systolic_en,
-    output [array_size*array_size*datawith-1:0] data_out,
+    output [array_size*array_size*datawidth-1:0] data_out,
     output reg compute_done
 );
 
 
-wire [datawith-1:0] weight_1;
-wire [datawith-1:0] weight_2;
-wire [datawith-1:0] data_1;
-wire [datawith-1:0] data_2;
+wire [datawidth-1:0] weight_1;
+wire [datawidth-1:0] weight_2;
+wire [datawidth-1:0] data_1;
+wire [datawidth-1:0] data_2;
 // we need check the bit location 
-assign weight_1 = weight_in[datawith-1:0];
-assign weight_2 = weight_in[2*datawith-1:datawith];
-assign data_1 = data_in[datawith-1:0];
-assign data_2 = data_in[2*datawith-1:datawith];
+assign weight_1 = weight_in[datawidth-1:0];
+assign weight_2 = weight_in[2*datawidth-1:datawidth];
+assign data_1 = data_in[datawidth-1:0];
+assign data_2 = data_in[2*datawidth-1:datawidth];
 
 reg [array_size*array_size-1:0]pe_count;
 
 
 //pe array
-wire [datawith-1:0] data_shitf [0:array_size-1][0:array_size-1];
-wire [datawith-1:0] weight_shitf [0:array_size-1][0:array_size-1];
+wire [datawidth-1:0] data_shitf [0:array_size-1][0:array_size-1];
+wire [datawidth-1:0] weight_shitf [0:array_size-1][0:array_size-1];
 
-wire [datawith-1:0] data_fifo_0;
-wire [datawith-1:0] data_fifo_1;
-wire [datawith-1:0] weight_fifo_0;
-wire [datawith-1:0] weight_fifo_1;
+wire [datawidth-1:0] data_fifo_0;
+wire [datawidth-1:0] data_fifo_1;
+wire [datawidth-1:0] weight_fifo_0;
+wire [datawidth-1:0] weight_fifo_1;
 
 
 assign data_fifo_0 = data_1;
@@ -67,7 +67,7 @@ assign weight_fifo_1 = weight_2;
 reg [$clog2(array_size*2)-1:0]pe_done_count;
 
 
-wire [datawith-1:0] data_out00,data_out01,data_out10,data_out11;
+wire [array_size* datawidth-1:0] mul_result_out;
 
 assign data_out = {data_out11,data_out10,data_out01,data_out00};
 
@@ -80,7 +80,7 @@ always @(posedge clk,negedge rst,negedge systolic_en)begin
     end
 end
 
-integer i;
+integer i,j;
 
 always @(posedge clk,negedge rst) begin
     if(!rst) begin
@@ -92,13 +92,37 @@ always @(posedge clk,negedge rst) begin
 end
 
 
-wire [16 -1:0] pe_en;
 
- 
+/////generate the pe enable signal
+wire [array_size * array_size - 1:0] pe_en;
+
+for (i = 0; i < array_size ; i++) begin
+    for (j = 0; j < array_size ; j++) begin
+        assign pe_en[i*array_size+j] = (pe_done_count > i*array_size+j) ? 0 : (pe_count > i*array_size+j);
+    end
+end
 assign pe_en[0] = (pe_done_count >0 && read_all_data)?0: (pe_count > 0 && systolic_en ) ;   //systolic_en is computer start
-assign pe_en[1] = (pe_done_count >1) ? 0 : (pe_count > 1  ) ;
-assign pe_en[2] = (pe_done_count >2) ? 0 : (pe_count > 2   ) ;
-assign pe_en[3] = (pe_done_count >3) ? 0 : (pe_count > 3   ) ;
+// assign pe_en[1] = (pe_done_count >1) ? 0 : (pe_count > 1  ) ;
+// assign pe_en[2] = (pe_done_count >2) ? 0 : (pe_count > 2   ) ;
+// assign pe_en[3] = (pe_done_count >3) ? 0 : (pe_count > 3   ) ;
+
+
+////////generate the data_shift and weight_shift
+wire [datawidth-1:0] data_shitf [0:array_size-1][0:array_size-1];
+wire [datawidth-1:0] weight_shitf [0:array_size-1][0:array_size-1];
+
+// for (i = 0; i < array_size ; i++) begin
+//     for (j = 0; j < array_size ; j++) begin
+//         if(i == 0 ) begin
+//             assign weight_shitf[i][j] = weight_in[j*datawidth+7,j*datawidth];
+//         end
+//         else if( j == 0) begin
+//             assign data_shitf[i][j] = data_in[i*datawidth+7,i*datawidth];
+//         end
+//     end
+// end
+
+
 
 
 always @ (posedge clk,negedge rst) begin
@@ -120,10 +144,70 @@ end
 
 end
 
+
+
+genvar row   , col;
+generate
+for(row = 0; row < array_size; row = row + 1) begin : row_gen
+
+    for(col = 0; col < array_size; col = col + 1) begin  : col_gen
+        if (row == 0 && col == 0) begin
+            pe #(.datawidth(datawidth)) pe_00(
+                .clk(clk),
+                .rst(rst),
+                .data_in(data_in[7:0]),
+                .weight_in(weight_in[7:0]),
+                .data_out(data_shitf[0][0]),
+                .weight_out(weight_shitf[0][0]),
+                .result(mul_result_out[15:0]),
+                .pe_en(pe_en[0][0])
+            );
+        end else if (row == 0 && col != 0) begin
+            pe #(.datawidth(datawidth)) pe_0j(
+                .clk(clk),
+                .rst(rst),
+                .data_in(data_shitf[0][col-1]),
+                .weight_in(weight_in[col*datawidth+7,col*datawidth]),
+                .data_out(data_shitf[0][col]),
+                .weight_out(weight_shitf[0][col]),
+                .result(mul_result_out[col*datawidth+7:col*datawidth]),
+                .pe_en(pe_en[0][col])
+            );
+        end else if (row != 0 && col == 0) begin
+            pe #(.datawidth(datawidth)) pe_i0(
+                .clk(clk),
+                .rst(rst),
+                .data_in(data_in[row*datawidth+7,row*datawidth]),
+                .weight_in(weight_shitf[row-1][0]),
+                .data_out(data_shitf[row][0]),
+                .weight_out(weight_shitf[row][0]),
+                .result(mul_result_out[row*datawidth+7:row*datawidth]),
+                .pe_en(pe_en[row][0])
+            );
+        end else begin
+            pe #(.datawidth(datawidth)) pe_ij(
+                .clk(clk),
+                .rst(rst),
+                .data_in(data_shitf[row][col-1]),
+                .weight_in(weight_shitf[row-1][col]),
+                .data_out(data_shitf[row][col]),
+                .weight_out(weight_shitf[row][col]),
+                .result(mul_result_out[row*datawidth+col+7:row*datawidth+col]),
+                .pe_en(pe_en[row][col])
+            );
+        end
+    end
+end
+endgenerate
+
+
+
+
+
 // assign pe_en = (pe_count == 3);
 // assign pe11_en = (pe_count == 4);
 
-pe #(.datawith(datawith)) pe_00(
+pe #(.datawidth(datawidth)) pe_00(
     .clk(clk),
     .rst(rst),
     .data_in(data_fifo_0),
@@ -134,7 +218,7 @@ pe #(.datawith(datawith)) pe_00(
     .pe_en(pe_en[0])
 );
 
-pe #(.datawith(datawith)) pe_01(
+pe #(.datawidth(datawidth)) pe_01(
     .clk(clk),
     .rst(rst),
     .data_in(data_shitf[0][0]),
@@ -145,7 +229,7 @@ pe #(.datawith(datawith)) pe_01(
     .pe_en(pe_en[1])
 );
 
-pe #(.datawith(datawith)) pe_10(
+pe #(.datawidth(datawidth)) pe_10(
     .clk(clk),
     .rst(rst),
     .data_in(data_fifo_1),
@@ -156,7 +240,7 @@ pe #(.datawith(datawith)) pe_10(
     .pe_en(pe_en[1])
 );
 
-pe #(.datawith(datawith)) pe_11(
+pe #(.datawidth(datawidth)) pe_11(
     .clk(clk),
     .rst(rst),
     .data_in(data_shitf[1][0]),
@@ -174,7 +258,7 @@ endmodule
 ///result station 
 module pe
 #(
-        parameter datawith = 16
+        parameter datawidth = 16
 )
 (
     input clk,
@@ -182,16 +266,16 @@ module pe
 
     input pe_en,
 
-    inout [datawith-1:0] data_in,
-    inout [datawith-1:0] weight_in,
-    output reg [datawith-1:0] data_out,
-    output reg  [datawith-1:0] weight_out,
-    //output [datawith-1:0] mul_result_out,
-    output reg [datawith-1:0] result
+    inout [datawidth-1:0] data_in,
+    inout [datawidth-1:0] weight_in,
+    output reg [datawidth-1:0] data_out,
+    output reg  [datawidth-1:0] weight_out,
+    //output [datawidth-1:0] mul_result_out,
+    output reg [datawidth-1:0] result
 
 
 );
-wire [datawith-1:0] mul_result_out;
+wire [datawidth-1:0] mul_result_out;
 
 assign  mul_result_out = data_in * weight_in;
 
